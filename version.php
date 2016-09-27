@@ -29,3 +29,5 @@ $plugin->component = 'local_coursetemplates';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = '2.7.0 (Build 2016031802)';   // Requires this Moodle version
 
+// Non moodle attributes
+$plugin->codeincrement = '2.7.0000';
