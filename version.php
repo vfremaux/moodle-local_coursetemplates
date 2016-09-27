@@ -14,20 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Version details.
+ *
  * @package    local_coursetemplates
  * @category   local
  * @author     Valery Fremaux <valery.fremaux@gmail.com>
+ * @copyright  2015 onwards Valery Fremaux (http://www.mylearnignfactory.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$plugin->version  = 2016031802;   // The (date) version of this plugin
-$plugin->requires = 2014110400;   // Requires this Moodle version
+defined('MOODLE_INTERNAL') || die();
+
+$plugin->version  = 2016031802;   // The (date) version of this plugin.
+$plugin->requires = 2014110400;   // Requires this Moodle version.
 $plugin->component = 'local_coursetemplates';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '2.8.0 (Build 2016031802)';   // Requires this Moodle version
+$plugin->release = '2.8.0 (Build 2016031802)';   // Requires this Moodle version.
 
-// Non moodle attributes
+// Non moodle attributes.
 $plugin->codeincrement = '2.8.0001';
