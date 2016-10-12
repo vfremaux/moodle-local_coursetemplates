@@ -43,7 +43,6 @@ $PAGE->set_context($context);
 
 // Security.
 require_login();
-// require_capability('moodle/course:create', $context);
 
 $renderer = $PAGE->get_renderer('local_coursetemplates');
 
@@ -51,26 +50,24 @@ $PAGE->set_title(get_string('pluginname', 'local_coursetemplates'));
 $PAGE->set_heading(get_string('pluginname', 'local_coursetemplates'));
 $PAGE->navbar->add(get_string('pluginname', 'local_coursetemplates'));
 
+// Control input and run deployment.
 if ($sourcecourse->id) {
-
     if (empty($sourcecourse->fullname)) {
         echo $OUTPUT->notification(get_string('erroremptyname', 'local_coursetemplates'), 'error');
-    } elseif (empty($sourcecourse->shortname)) {
+    } else if (empty($sourcecourse->shortname)) {
         echo $OUTPUT->notification(get_string('erroremptyshortname', 'local_coursetemplates'), 'error');
-    } elseif (empty($targetcategory)) {
+    } else if (empty($targetcategory)) {
         print_error('errorbadcategory', 'local_coursetemplates');
-    } elseif (!$targetcontext = context_coursecat::instance($targetcategory)) {
+    } else if (!$targetcontext = context_coursecat::instance($targetcategory)) {
         print_error('errorbadcategorycontext', 'local_coursetemplates');
-    } elseif (!has_capability('moodle/course:create', $targetcontext)) {
+    } else if (!has_capability('moodle/course:create', $targetcontext)) {
         echo $OUTPUT->notification(get_string('errornocategoryaccess', 'local_coursetemplates'), 'error');
     } else {
         $enrolme = optional_param('enrolme', false, PARAM_INT);
         coursetemplate_restore_template($targetcategory, $sourcecourse, $enrolme);
 
         $OUTPUT->header();
-
         echo $renderer->postdeploychoice();
-
         $OUTPUT->footer();
     }
 }
@@ -86,6 +83,7 @@ if (optional_param('profileme', 0, PARAM_BOOL)) {
 
 $mform = new TemplateDeployForm($url, $options);
 
+// Process intermediary forms.
 if ($data = $mform->get_data()) {
     // Deploy a new templated course.
 
@@ -110,7 +108,7 @@ if ($data = $mform->get_data()) {
         $contextid = context_system::instance()->id;
         $component = 'local_coursetemplates';
         $filearea = 'temp';
-        $itemid = $uniq = 9999999 + rand(0,100000);
+        $itemid = $uniq = 9999999 + rand(0, 100000);
         $tempdir = $CFG->dataroot."/temp/backup/$uniq";
 
         if (!is_dir($tempdir)) {
@@ -119,26 +117,26 @@ if ($data = $mform->get_data()) {
 
         if ($archivefile->extract_to_pathname(new zip_packer(), $tempdir)) {
 
-            // Transaction
+            // Transaction.
             $transaction = $DB->start_delegated_transaction();
 
             // Create new course.
-            $folder = $uniq; // as found in: $CFG->dataroot . '/temp/backup/' 
+            $folder = $uniq; // as found in dataroot in /temp/backup/.
             $categoryid = $data->category; // a categoryid
-            $user_doing_the_restore = $USER->id; // e.g. 2 == admin
+            $user_doing_the_restore = $USER->id; // E.g. 2 == admin.
             $newcourse_id = restore_dbops::create_new_course('', '', $categoryid);
 
             // Restore backup into course.
-            $controller = new restore_controller($folder, $newcourse_id, 
-                    backup::INTERACTIVE_NO, backup::MODE_SAMESITE, $user_doing_the_restore,
-                    backup::TARGET_NEW_COURSE );
+            $controller = new restore_controller($folder, $newcourse_id,
+                backup::INTERACTIVE_NO, backup::MODE_SAMESITE, $user_doing_the_restore,
+                backup::TARGET_NEW_COURSE );
             $controller->execute_precheck();
             $controller->execute_plan();
 
             // Commit.
             $transaction->allow_commit();
 
-            // Update names
+            // Update names.
             if ($newcourse = $DB->get_record('course', array('id' => $newcourse_id))) {
                 $newcourse->fullname = $data->fullname;
                 $newcourse->shortname = $data->shortname;
@@ -149,13 +147,14 @@ if ($data = $mform->get_data()) {
             if (!empty($data->enrolme)) {
                 $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
                 $enrolplugin = enrol_get_plugin('manual');
-                if ($enrols = $DB->get_records('enrol', array('enrol' => 'manual', 'courseid' => $newcourse_id, 'status' => ENROL_INSTANCE_ENABLED), 'sortorder ASC')) {
+                $params = array('enrol' => 'manual', 'courseid' => $newcourse_id, 'status' => ENROL_INSTANCE_ENABLED);
+                if ($enrols = $DB->get_records('enrol', $params, 'sortorder ASC')) {
                     $enrol = reset($enrols);
                     $enrolplugin->enrol_user($enrol, $USER->id, $role->id, time(), 0, ENROL_USER_ACTIVE);
                 }
             }
 
-            // Cleanup temp file area
+            // Cleanup temp file area.
             $fs = get_file_storage();
             $fs->delete_area_files($contextid, 'local_coursetemplates', 'temp');
 
