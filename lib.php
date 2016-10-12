@@ -14,14 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * @package    local_coursetemplates
  * @category   local
  * @author     Valery Fremaux <valery.fremaux@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * prints a flat template list from available templates
@@ -73,7 +72,8 @@ function coursetemplates_restore_template($category, $sourcecourse, $enrolme) {
     }
 
     if (!$backupfiles) {
-        // Get last standard backup
+        assert(true);
+        // TODO : Get last standard backup.
     }
 
     if (!$backupfiles) {
@@ -89,7 +89,7 @@ function coursetemplates_restore_template($category, $sourcecourse, $enrolme) {
     ini_set('max_execution_time', $maxtime);
     ini_set('memory_limit', $maxmem);
 
-    // confirm/force guest closure
+    // Confirm/force guest closure.
 
     $file = array_pop ($backupfiles);
     $newcourse_id =  restore_automation::run_automated_restore($file->get_id(), null, $category);
@@ -102,7 +102,8 @@ function coursetemplates_restore_template($category, $sourcecourse, $enrolme) {
     if ($enrolme) {
         $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
         $enrol = enrol_get_plugin('manual');
-        if ($enrols = $DB->get_records('enrol', array('enrol' => $c->enrol, 'courseid' => $newcourse_id, 'status' => ENROL_INSTANCE_ENABLED), 'sortorder ASC')) {
+        $params = array('enrol' => $c->enrol, 'courseid' => $newcourse_id, 'status' => ENROL_INSTANCE_ENABLED);
+        if ($enrols = $DB->get_records('enrol', $params, 'sortorder ASC')) {
             $enrol = reset($enrols);
             $enrolplugin = enrol_get_plugin($c->enrol);
             $enrolplugin->enrol_user($enrol, $USER->id, $role->id, time(), 0, ENROL_USER_ACTIVE);
@@ -119,7 +120,7 @@ function coursetemplates_restore_template($category, $sourcecourse, $enrolme) {
  * @return boolean
  */
 function local_coursetemplates_locate_backup_file($courseid, $filearea) {
-    global $CFG, $DB;
+    global $DB;
 
     $fs = get_file_storage();
     $templatecontext = context_course::instance($courseid);

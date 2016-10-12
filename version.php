@@ -23,7 +23,6 @@
  * @copyright  2015 onwards Valery Fremaux (http://www.mylearnignfactory.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version  = 2016031802;   // The (date) version of this plugin.
