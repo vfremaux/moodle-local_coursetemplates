@@ -1,5 +1,5 @@
 <?php
-// This file is NOT part of Moodle - http://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
  * @author     Valery Fremaux <valery.fremaux@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 require('../../config.php');
 require_once($CFG->dirroot.'/local/coursetemplates/deploy_form.php');
 require_once($CFG->dirroot.'/local/coursetemplates/lib.php');
@@ -121,14 +120,14 @@ if ($data = $mform->get_data()) {
             $transaction = $DB->start_delegated_transaction();
 
             // Create new course.
-            $folder = $uniq; // as found in dataroot in /temp/backup/.
-            $categoryid = $data->category; // a categoryid
-            $user_doing_the_restore = $USER->id; // E.g. 2 == admin.
-            $newcourse_id = restore_dbops::create_new_course('', '', $categoryid);
+            $folder = $uniq; // As found in dataroot in /temp/backup/.
+            $categoryid = $data->category; // A categoryid.
+            $userdoingtherestore = $USER->id; // E.g. 2 == admin.
+            $newcourseid = restore_dbops::create_new_course('', '', $categoryid);
 
             // Restore backup into course.
-            $controller = new restore_controller($folder, $newcourse_id,
-                backup::INTERACTIVE_NO, backup::MODE_SAMESITE, $user_doing_the_restore,
+            $controller = new restore_controller($folder, $newcourseid,
+                backup::INTERACTIVE_NO, backup::MODE_SAMESITE, $userdoingtherestore,
                 backup::TARGET_NEW_COURSE );
             $controller->execute_precheck();
             $controller->execute_plan();
@@ -137,7 +136,7 @@ if ($data = $mform->get_data()) {
             $transaction->allow_commit();
 
             // Update names.
-            if ($newcourse = $DB->get_record('course', array('id' => $newcourse_id))) {
+            if ($newcourse = $DB->get_record('course', array('id' => $newcourseid))) {
                 $newcourse->fullname = $data->fullname;
                 $newcourse->shortname = $data->shortname;
                 $newcourse->idnumber = $data->idnumber;
@@ -147,7 +146,7 @@ if ($data = $mform->get_data()) {
             if (!empty($data->enrolme)) {
                 $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
                 $enrolplugin = enrol_get_plugin('manual');
-                $params = array('enrol' => 'manual', 'courseid' => $newcourse_id, 'status' => ENROL_INSTANCE_ENABLED);
+                $params = array('enrol' => 'manual', 'courseid' => $newcourseid, 'status' => ENROL_INSTANCE_ENABLED);
                 if ($enrols = $DB->get_records('enrol', $params, 'sortorder ASC')) {
                     $enrol = reset($enrols);
                     $enrolplugin->enrol_user($enrol, $USER->id, $role->id, time(), 0, ENROL_USER_ACTIVE);
@@ -160,7 +159,8 @@ if ($data = $mform->get_data()) {
 
             echo $OUTPUT->header();
             echo $OUTPUT->notification(get_string('success', 'local_coursetemplates'), 'notifysuccess');
-            echo $OUTPUT->single_button(new moodle_url('/course/view.php', array('id' => $newcourse_id)), get_string('gotonew', 'local_coursetemplates'));
+            $label = get_string('gotonew', 'local_coursetemplates');
+            echo $OUTPUT->single_button(new moodle_url('/course/view.php', array('id' => $newcourseid)), $label);
             echo '<hr>';
             $mform->display();
             echo $OUTPUT->footer();
