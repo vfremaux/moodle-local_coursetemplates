@@ -1,5 +1,5 @@
 <?php
-// This file is NOT part of Moodle - http://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -47,8 +47,8 @@ function coursetemplates_course_list() {
     }
 }
 
-/** 
- * Make a silent restore of the template into the target category and enrol user as teacher inside 
+/**
+ * Make a silent restore of the template into the target category and enrol user as teacher inside
  * if reqested.
  * NOT USED AT THE MOMENT
  */
@@ -92,17 +92,17 @@ function coursetemplates_restore_template($category, $sourcecourse, $enrolme) {
     // Confirm/force guest closure.
 
     $file = array_pop ($backupfiles);
-    $newcourse_id =  restore_automation::run_automated_restore($file->get_id(), null, $category);
+    $newcourseid = restore_automation::run_automated_restore($file->get_id(), null, $category);
 
     // Confirm/force idnumber and new course params in new course.
-    $DB->set_field('course', 'fullname', $sourcecourse->fullname, array('id' => "{$newcourse_id}"));
-    $DB->set_field('course', 'shortname', $sourcecourse->shortname, array('id' => "{$newcourse_id}"));
-    $DB->set_field('course', 'idnumber', $sourcecourse->idnumber, array('id' => "{$newcourse_id}"));
+    $DB->set_field('course', 'fullname', $sourcecourse->fullname, array('id' => "{$newcourseid}"));
+    $DB->set_field('course', 'shortname', $sourcecourse->shortname, array('id' => "{$newcourseid}"));
+    $DB->set_field('course', 'idnumber', $sourcecourse->idnumber, array('id' => "{$newcourseid}"));
 
     if ($enrolme) {
         $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
         $enrol = enrol_get_plugin('manual');
-        $params = array('enrol' => $c->enrol, 'courseid' => $newcourse_id, 'status' => ENROL_INSTANCE_ENABLED);
+        $params = array('enrol' => $c->enrol, 'courseid' => $newcourseid, 'status' => ENROL_INSTANCE_ENABLED);
         if ($enrols = $DB->get_records('enrol', $params, 'sortorder ASC')) {
             $enrol = reset($enrols);
             $enrolplugin = enrol_get_plugin($c->enrol);
@@ -110,7 +110,7 @@ function coursetemplates_restore_template($category, $sourcecourse, $enrolme) {
         }
     }
 
-    return ($newcourse_id);
+    return ($newcourseid);
 }
 
 /**

@@ -1,5 +1,5 @@
 <?php
-// This file is NOT part of Moodle - http://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -45,12 +45,12 @@ class local_coursetemplates_renderer extends plugin_renderer_base {
         $str .= '</tr>';
         $str .= '</table>';
         $str .= '</div>';
-        
+
         return $str;
     }
 
     /**
-     * provides form elements for deployment. 
+     * provides form elements for deployment.
      * will pick all the target categories the user can create courses in
      */
     public function deployform() {
