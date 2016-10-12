@@ -32,31 +32,27 @@ class local_coursetemplates_observer {
      * This will add the teacher as standard editingteacher
      * @param object $event
      */
-    static function on_course_created(\core\event\course_created $event) {
+    public static function on_course_created(\core\event\course_created $event) {
         global $DB;
-
-        /*
-        if (defined('CLI_SCRIPT')) {
-            return;
-        }
-        */
 
         // Exclude administrators from this setup.
         // Administrators usually create courses for other people.
         $systemcontext = context_system::instance();
+
         if (has_capability('moodle/site:config', $systemcontext, $event->userid)) {
             return;
         }
+
         if (has_capability('tool/sync:configure', $systemcontext, $event->userid)) {
             return;
         }
 
         $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
         $enrolplugin = enrol_get_plugin('manual');
-        if ($enrols = $DB->get_records('enrol', array('enrol' => 'manual', 'courseid' => $event->objectid, 'status' => ENROL_INSTANCE_ENABLED), 'sortorder ASC')) {
+        $params = array('enrol' => 'manual', 'courseid' => $event->objectid, 'status' => ENROL_INSTANCE_ENABLED);
+        if ($enrols = $DB->get_records('enrol', $params, 'sortorder ASC')) {
             $enrol = reset($enrols);
             $enrolplugin->enrol_user($enrol, $event->userid, $role->id, time(), 0, ENROL_USER_ACTIVE);
         }
-
     }
 }
