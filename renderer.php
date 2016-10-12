@@ -14,26 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * @package    local_coursetemplates
  * @category   local
  * @author     Valery Fremaux <valery.fremaux@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
 class local_coursetemplates_renderer extends plugin_renderer_base {
 
-    function templatecoursebox($course) {
+    public function templatecoursebox($course) {
+
         $class = (!$course->visible) ? ' coursetemplate-shadow' : '';
 
         $str = '';
 
         $str .= '<div class="courselist coursebox '.$class.'">';
         $str .= '<table class="course" width="100%">';
-        $submitbutton = '<div class="coursetemplate-submit"><input name="deploy" type="submit" value="'.get_string('deploy', 'local_coursetemplates').'" onclick="coursetemplate_submit();" /></div>';
-        $str .= '<tr><td colspan="2" class="coursetemplates-coursename"><h3>'.format_string($course->fullname).$submitbutton.'</h3></td></tr>';
+        $button = '<input name="deploy"
+                          type="submit"
+                          value="'.get_string('deploy', 'local_coursetemplates').'"
+                          onclick="coursetemplate_submit();" />';
+        $submitbutton = '<div class="coursetemplate-submit">'.$button.'</div>';
+        $title = '<h3>'.format_string($course->fullname).$submitbutton.'</h3>';
+        $str .= '<tr><td colspan="2" class="coursetemplates-coursename">'.$title.'</td></tr>';
         $str .= '<tr>';
         $str .= '<td width="20%" class="coursetemplates-coursepicture"></td>';
         $str .= '<td width="80%" class="coursetemplates-coursedesc">'.$course->summary.'</td>';
@@ -48,13 +53,13 @@ class local_coursetemplates_renderer extends plugin_renderer_base {
      * provides form elements for deployment. 
      * will pick all the target categories the user can create courses in
      */
-    function deployform() {
+    public function deployform() {
         global $CFG;
-        
-        // post 2.5
+
+        // Post 2.5.
         include_once($CFG->dirroot.'/lib/coursecatlib.php');
         $mycatlist = coursecat::make_categories_list('moodle/course:create');
-        
+
         $str = '';
         $str .= '<table width="100%">';
 
@@ -99,7 +104,8 @@ class local_coursetemplates_renderer extends plugin_renderer_base {
         return $str;
     }
 
-    function postdeploychoice($newcourseid, $templatecourseid) {
+    public function postdeploychoice($newcourseid, $templatecourseid) {
+
         $str = '';
 
         $newcourseurl = new moodle_url('/course/view.php', array('id' => $newvcouseid));

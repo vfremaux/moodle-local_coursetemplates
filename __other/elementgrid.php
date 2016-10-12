@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Button form element
  *
@@ -25,8 +23,10 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2007 Jamie Pratt <me@jamiep.org>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
 if (!class_exists('MoodleQuickForm_elementgrid')) {
+ 
     if (file_exists($CFG->libdir.'/pear/HTML/QuickForm/elementgrid.php')) {
         require_once("HTML/QuickForm/elementgrid.php");
     } else {
@@ -43,8 +43,7 @@ if (!class_exists('MoodleQuickForm_elementgrid')) {
  * @copyright 2007 Jamie Pratt <me@jamiep.org>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-    class MoodleQuickForm_elementgrid extends HTML_QuickForm_elementgrid
-    {
+    class MoodleQuickForm_elementgrid extends HTML_QuickForm_elementgrid {
         /** @var string html for help button, if empty then no help */
         var $_helpbutton = '';
         var $_colwidths = null;

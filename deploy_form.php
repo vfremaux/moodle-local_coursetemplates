@@ -14,21 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * @package    local_coursetemplates
  * @category   local
  * @author     Valery Fremaux <valery.fremaux@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
-require $CFG->libdir.'/formslib.php';
+require($CFG->libdir.'/formslib.php');
 require_once('__other/elementgrid.php');
 
 class TemplateDeployForm extends moodleform {
 
-    function definition() {
+    public function definition() {
         global $DB, $CFG;
 
         $mform = $this->_form;
@@ -56,7 +55,8 @@ class TemplateDeployForm extends moodleform {
         if (empty($this->_customdata['categoryid'])) {
             $mform->addElement('select', 'category', get_string('category'), $mycatlist);
             $mform->setType('category', PARAM_INT);
-            $mform->addRule('category', get_string('errormissingcategory', 'local_coursetemplates'), 'required', null, 'client');
+            $label = get_string('errormissingcategory', 'local_coursetemplates');
+            $mform->addRule('category', $label, 'required', null, 'client');
         } else {
             $mform->addElement('hidden', 'category', $this->_customdata['categoryid']);
             $mform->setType('category', PARAM_INT);
@@ -90,7 +90,7 @@ class TemplateDeployForm extends moodleform {
     function validation($data, $files = array()) {
         global $DB;
 
-        $errors = array();
+        $errors = parent::validation($data, $files);
 
         if ($DB->get_record('course', array('shortname' => $data['shortname']))) {
             $errors['shortname'] = get_string('errorshortnameused', 'local_coursetemplates');
