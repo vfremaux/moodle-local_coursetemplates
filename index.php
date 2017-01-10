@@ -24,6 +24,7 @@ require('../../config.php');
 require_once($CFG->dirroot.'/local/coursetemplates/deploy_form.php');
 require_once($CFG->dirroot.'/local/coursetemplates/lib.php');
 require_once($CFG->dirroot.'/backup/util/includes/restore_includes.php');
+require_once("$CFG->libdir/filestorage/tgz_packer.php");
 
 $url = new moodle_url('/local/coursetemplates/index.php');
 
@@ -108,25 +109,24 @@ if ($data = $mform->get_data()) {
         $component = 'local_coursetemplates';
         $filearea = 'temp';
         $itemid = $uniq = 9999999 + rand(0, 100000);
-        $tempdir = $CFG->dataroot."/temp/backup/$uniq";
+        $tempdir = $CFG->tempdir."/backup/$uniq";
 
         if (!is_dir($tempdir)) {
             mkdir($tempdir, 0777, true);
         }
 
-        if ($archivefile->extract_to_pathname(new zip_packer(), $tempdir)) {
+        if ($archivefile->extract_to_pathname(new tgz_packer(), $tempdir)) {
 
             // Transaction.
             $transaction = $DB->start_delegated_transaction();
 
             // Create new course.
-            $folder = $uniq; // As found in dataroot in /temp/backup/.
             $categoryid = $data->category; // A categoryid.
             $userdoingtherestore = $USER->id; // E.g. 2 == admin.
             $newcourseid = restore_dbops::create_new_course('', '', $categoryid);
 
             // Restore backup into course.
-            $controller = new restore_controller($folder, $newcourseid,
+            $controller = new restore_controller($uniq, $newcourseid,
                 backup::INTERACTIVE_NO, backup::MODE_SAMESITE, $userdoingtherestore,
                 backup::TARGET_NEW_COURSE );
             $controller->execute_precheck();

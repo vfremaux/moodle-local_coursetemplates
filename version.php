@@ -29,7 +29,7 @@ $plugin->version  = 2016031802;   // The (date) version of this plugin.
 $plugin->requires = 2016051900;   // Requires this Moodle version.
 $plugin->component = 'local_coursetemplates';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '3.1.0 (Build 2016031802)';   // Requires this Moodle version.
+$plugin->release = '3.1.0 (Build 2016031802)';
 
 // Non moodle attributes.
 $plugin->codeincrement = '3.1.0001';
