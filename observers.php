@@ -47,10 +47,6 @@ class local_coursetemplates_observer {
             return;
         }
 
-        if (defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
-            return;
-        }
-
         $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
         $enrolplugin = enrol_get_plugin('manual');
         $params = array('enrol' => 'manual', 'courseid' => $event->objectid, 'status' => ENROL_INSTANCE_ENABLED);
