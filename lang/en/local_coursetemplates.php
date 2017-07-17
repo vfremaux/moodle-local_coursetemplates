@@ -43,3 +43,4 @@ $string['success'] = 'Deployment was successfull';
 $string['targetcategory'] = 'Target category';
 $string['templateselection'] = 'Template choice';
 $string['usetemplate'] = 'Deploy a course from an existing template';
+$string['restoreerror'] = 'Error when restoring. The archive could not be opened';
