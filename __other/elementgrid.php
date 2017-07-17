@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 if (!class_exists('MoodleQuickForm_elementgrid')) {
- 
+
     if (file_exists($CFG->libdir.'/pear/HTML/QuickForm/elementgrid.php')) {
         require_once("HTML/QuickForm/elementgrid.php");
     } else {
