@@ -15,21 +15,28 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details.
- *
  * @package    local_coursetemplates
  * @category   local
  * @author     Valery Fremaux <valery.fremaux@gmail.com>
- * @copyright  2015 onwards Valery Fremaux (http://www.mylearnignfactory.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2016031802;   // The (date) version of this plugin.
-$plugin->requires = 2015111100;   // Requires this Moodle version.
-$plugin->component = 'local_coursetemplates';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = '3.0.0 (Build 2016031802)';   // Requires this Moodle version.
+require_once($CFG->dirroot.'/local/coursetemplates/lib.php');
 
-// Non moodle attributes.
-$plugin->codeincrement = '3.0.0001';
+/**
+ * @return a simple array of ids.
+ */
+function local_coursetemplates_get_template_categories() {
+
+    $config = get_config('local_coursetemplates');
+
+    if (empty($config->templatecategory)) {
+        return array();
+    }
+
+    $categories = array();
+    local_coursetemplates_get_all_categories($categories, $config->templatecategory);
+
+    return $categories;
+}
