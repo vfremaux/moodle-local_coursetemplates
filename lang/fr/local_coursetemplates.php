@@ -43,3 +43,4 @@ $string['success'] = 'Le déploiement s\'est fait correctement';
 $string['targetcategory'] = 'Catégorie de destination';
 $string['templateselection'] = 'Sélection du modèle';
 $string['usetemplate'] = 'Déployer un cours à partir d\'un modèle';
+$string['restoreerror'] = 'Erreur de restauration. L\'archive n\'a pas pu être ouverte';

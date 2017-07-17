@@ -103,70 +103,12 @@ if ($data = $mform->get_data()) {
         print_error('errorbadtemplateid', 'local_coursetemplates', '', $url);
     }
 
-    if ($archivefile = local_coursetemplates_locate_backup_file($templatecourseid, 'course')) {
+    if (!$archivefile = local_coursetemplates_locate_backup_file($templatecourseid, 'course')) {
+        // Try backup the template automatically.
+        $archivefile = local_coursetemplates_backup_for_template($templatecourseid);
+    }
 
-        $contextid = context_system::instance()->id;
-        $component = 'local_coursetemplates';
-        $filearea = 'temp';
-        $itemid = $uniq = 9999999 + rand(0, 100000);
-        $tempdir = $CFG->tempdir."/backup/$uniq";
-
-        if (!is_dir($tempdir)) {
-            mkdir($tempdir, 0777, true);
-        }
-
-        if ($archivefile->extract_to_pathname(new tgz_packer(), $tempdir)) {
-
-            // Transaction.
-            $transaction = $DB->start_delegated_transaction();
-
-            // Create new course.
-            $categoryid = $data->category; // A categoryid.
-            $userdoingtherestore = $USER->id; // E.g. 2 == admin.
-            $newcourseid = restore_dbops::create_new_course('', '', $categoryid);
-
-            // Restore backup into course.
-            $controller = new restore_controller($uniq, $newcourseid,
-                backup::INTERACTIVE_NO, backup::MODE_SAMESITE, $userdoingtherestore,
-                backup::TARGET_NEW_COURSE );
-            $controller->execute_precheck();
-            $controller->execute_plan();
-
-            // Commit.
-            $transaction->allow_commit();
-
-            // Update names.
-            if ($newcourse = $DB->get_record('course', array('id' => $newcourseid))) {
-                $newcourse->fullname = $data->fullname;
-                $newcourse->shortname = $data->shortname;
-                $newcourse->idnumber = $data->idnumber;
-                $DB->update_record('course', $newcourse);
-            }
-
-            if (!empty($data->enrolme)) {
-                $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
-                $enrolplugin = enrol_get_plugin('manual');
-                $params = array('enrol' => 'manual', 'courseid' => $newcourseid, 'status' => ENROL_INSTANCE_ENABLED);
-                if ($enrols = $DB->get_records('enrol', $params, 'sortorder ASC')) {
-                    $enrol = reset($enrols);
-                    $enrolplugin->enrol_user($enrol, $USER->id, $role->id, time(), 0, ENROL_USER_ACTIVE);
-                }
-            }
-
-            // Cleanup temp file area.
-            $fs = get_file_storage();
-            $fs->delete_area_files($contextid, 'local_coursetemplates', 'temp');
-
-            echo $OUTPUT->header();
-            echo $OUTPUT->notification(get_string('success', 'local_coursetemplates'), 'notifysuccess');
-            $label = get_string('gotonew', 'local_coursetemplates');
-            echo $OUTPUT->single_button(new moodle_url('/course/view.php', array('id' => $newcourseid)), $label);
-            echo '<hr>';
-            $mform->display();
-            echo $OUTPUT->footer();
-            die;
-        }
-    } else {
+    if (!$archivefile) {
         echo $OUTPUT->header();
         echo $OUTPUT->box_start('error');
         echo $OUTPUT->notification(get_string('errornobackup', 'local_coursetemplates'));
@@ -175,6 +117,75 @@ if ($data = $mform->get_data()) {
         echo $OUTPUT->footer();
         die;
     }
+
+    $contextid = context_system::instance()->id;
+    $component = 'local_coursetemplates';
+    $filearea = 'temp';
+    $itemid = $uniq = 9999999 + rand(0, 100000);
+    $tempdir = $CFG->tempdir."/backup/$uniq";
+
+    if (!is_dir($tempdir)) {
+        mkdir($tempdir, 0777, true);
+    }
+
+    if (!$archivefile->extract_to_pathname(new tgz_packer(), $tempdir)) {
+        echo $OUTPUT->header();
+        echo $OUTPUT->box_start('error');
+        echo $OUTPUT->notification(get_string('restoreerror', 'local_coursetemplates'));
+        echo $OUTPUT->box_end();
+        echo $OUTPUT->continue_button($url);
+        echo $OUTPUT->footer();
+        die;
+    }
+
+    // Transaction.
+    $transaction = $DB->start_delegated_transaction();
+
+    // Create new course.
+    $categoryid = $data->category; // A categoryid.
+    $userdoingtherestore = $USER->id; // E.g. 2 == admin.
+    $newcourseid = restore_dbops::create_new_course('', '', $categoryid);
+
+    // Restore backup into course.
+    $controller = new restore_controller($uniq, $newcourseid,
+        backup::INTERACTIVE_NO, backup::MODE_SAMESITE, $userdoingtherestore,
+        backup::TARGET_NEW_COURSE );
+    $controller->execute_precheck();
+    $controller->execute_plan();
+
+    // Commit.
+    $transaction->allow_commit();
+
+    // Update names.
+    if ($newcourse = $DB->get_record('course', array('id' => $newcourseid))) {
+        $newcourse->fullname = $data->fullname;
+        $newcourse->shortname = $data->shortname;
+        $newcourse->idnumber = $data->idnumber;
+        $DB->update_record('course', $newcourse);
+    }
+
+    if (!empty($data->enrolme)) {
+        $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
+        $enrolplugin = enrol_get_plugin('manual');
+        $params = array('enrol' => 'manual', 'courseid' => $newcourseid, 'status' => ENROL_INSTANCE_ENABLED);
+        if ($enrols = $DB->get_records('enrol', $params, 'sortorder ASC')) {
+            $enrol = reset($enrols);
+            $enrolplugin->enrol_user($enrol, $USER->id, $role->id, time(), 0, ENROL_USER_ACTIVE);
+        }
+    }
+
+    // Cleanup temp file area.
+    $fs = get_file_storage();
+    $fs->delete_area_files($contextid, 'local_coursetemplates', 'temp');
+
+    echo $OUTPUT->header();
+    echo $OUTPUT->notification(get_string('success', 'local_coursetemplates'), 'notifysuccess');
+    $label = get_string('gotonew', 'local_coursetemplates');
+    echo $OUTPUT->single_button(new moodle_url('/course/view.php', array('id' => $newcourseid)), $label);
+    echo '<hr>';
+    $mform->display();
+    echo $OUTPUT->footer();
+    die;
 }
 
 echo $OUTPUT->header();
