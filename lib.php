@@ -91,7 +91,7 @@ function coursetemplates_restore_template($category, $sourcecourse, $enrolme) {
 
     // Confirm/force guest closure.
 
-    $file = array_pop ($backupfiles);
+    $file = array_pop($backupfiles);
     $newcourseid = restore_automation::run_automated_restore($file->get_id(), null, $category);
 
     // Confirm/force idnumber and new course params in new course.
@@ -141,4 +141,131 @@ function local_coursetemplates_locate_backup_file($courseid, $filearea) {
     }
 
     return false;
+}
+
+/**
+ * Make a course backup without user data and stores it in the course
+ * backup area.
+ */
+function local_coursetemplates_backup_for_template($courseid, $options = array(), &$log = '') {
+    global $CFG, $USER;
+
+    $user = get_admin();
+
+    include_once($CFG->dirroot.'/backup/util/includes/backup_includes.php');
+
+    $bc = new backup_controller(backup::TYPE_1COURSE, $courseid, backup::FORMAT_MOODLE,
+                                backup::INTERACTIVE_NO, backup::MODE_GENERAL, $user->id);
+
+    try {
+
+        $coursecontext = context_course::instance($courseid);
+
+        // Build default settings for quick backup.
+        // Quick backup is intended for publishflow purpose.
+
+        // Get default filename info from controller.
+        $format = $bc->get_format();
+        $type = $bc->get_type();
+        $id = $bc->get_id();
+        $users = $bc->get_plan()->get_setting('users')->get_value();
+        $anonymised = $bc->get_plan()->get_setting('anonymize')->get_value();
+
+        $settings = array(
+            'users' => 0,
+            'role_assignments' => 0,
+            'user_files' => 0,
+            'activities' => 1,
+            'blocks' => 1,
+            'filters' => 1,
+            'comments' => 0,
+            'completion_information' => 0,
+            'logs' => 0,
+            'histories' => 0,
+            'filename' => backup_plan_dbops::get_default_backup_filename($format, $type, $id, $users, $anonymised)
+        );
+
+        foreach ($settings as $setting => $configsetting) {
+            if ($bc->get_plan()->setting_exists($setting)) {
+                $bc->get_plan()->get_setting($setting)->set_value($configsetting);
+            }
+        }
+
+        $bc->set_status(backup::STATUS_AWAITING);
+
+        $bc->execute_plan();
+        $results = $bc->get_results();
+        // Convert user file in course file.
+        $file = $results['backup_destination'];
+
+        $fs = get_file_storage();
+
+        $filerec = new StdClass();
+        $filerec->contextid = $coursecontext->id;
+        $filerec->component = 'backup';
+        $filerec->filearea = 'course';
+        $filerec->itemid = 0;
+        $filerec->filepath = $file->get_filepath();
+        $filerec->filename = $file->get_filename();
+
+        if (!empty($options['clean'])) {
+            if (!empty($options['verbose'])) {
+                $log .= "Cleaning course backup area\n";
+            }
+            $fs->delete_area_files($coursecontext->id, 'backup', 'course');
+        }
+
+        if (!empty($options['verbose'])) {
+            $log .= "Moving backup to course backup area\n";
+        }
+        $archivefile = $fs->create_file_from_storedfile($filerec, $file);
+
+        // Remove user scope original file.
+        $file->delete();
+
+        return $archivefile;
+
+    } catch (backup_exception $e) {
+        return null;
+    }
+}
+
+function local_coursetemplates_get_courses() {
+    global $DB;
+
+    $config = get_config('local_coursetemplates');
+
+    if (empty($config->templatecategory)) {
+        return;
+    }
+
+    $categories = array();
+    local_coursetemplates_get_all_categories($categories, $config->templatecategory);
+
+    list($insql, $params) = $DB->get_in_or_equal($categories);
+
+    $select = " category $insql ";
+
+    $allcourses = $DB->get_records_select('course', $select, $params, 'id,shortname,fullname');
+
+    return $allcourses;
+}
+
+/**
+ * Recusively fetch all template categories subtree.
+ *
+ */
+function local_coursetemplates_get_all_categories(&$catarray, $parent) {
+    global $DB;
+
+    $catarray[] = $parent;
+
+    $children = $DB->get_records('course_categories', array('parent' => $parent), 'id,name');
+    if (empty($children)) {
+        return;
+    }
+
+    foreach (array_keys($children) as $ch) {
+        local_coursetemplates_get_all_categories($catarray, $ch);
+    }
 }
