@@ -269,3 +269,44 @@ function local_coursetemplates_get_all_categories(&$catarray, $parent) {
         local_coursetemplates_get_all_categories($catarray, $ch);
     }
 }
+
+function local_coursetemplates_enable() {
+    set_config('enabled', 1, 'local_coursetemplates');
+}
+
+function local_coursetemplates_disable() {
+    set_config('enabled', 0, 'local_coursetemplates');
+}
+
+function local_coursetemplates_enabled() {
+    return get_config('local_coursetemplates', 'enabled');
+}
+
+/**
+ * get courses i am authoring in (or by capability).
+ * @param string $fields return fields of the course record
+ * @param string $capability the capability to check for authoring
+ * @param string $excludecats an array of catids we do not want courses in
+ */
+function local_coursetemplates_get_my_authoring_courses($fields = '*', $capability = 'local/my:isauthor', $excludecats = array()) {
+    global $USER, $DB;
+
+    if (empty($fields)) {
+        throw new moodle_exception('Empty field list');
+    }
+
+    if ($fields != '*' && !preg_match('/\bcategory\b/', $fields)) {
+        $fields .= ',category';
+    }
+
+    if ($authored = local_get_user_capability_course($capability, $USER->id, false, '', 'sortorder')) {
+        foreach ($authored as $a) {
+            $course = $DB->get_record('course', array('id' => $a->id), $fields);
+            if (!in_array($course->category, $excludecats)) {
+                $authoredcourses[$a->id] = $course;
+            }
+        }
+        return $authoredcourses;
+    }
+    return array();
+}
