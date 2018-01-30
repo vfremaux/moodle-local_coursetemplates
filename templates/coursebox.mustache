@@ -1,0 +1,27 @@
+
+
+
+
+<div class="courselist coursebox {{class}}">
+    <table class="course" width="100%">
+        <tr>
+            <td colspan="2" class="coursetemplates-coursename">
+                <h3>{{{fullname}}}
+                    <div class="coursetemplate-submit">
+                    <input name="deploy"
+                                  type="submit"
+                                  value="{{deploystr}}"
+                                  onclick="coursetemplate_submit();" />
+                    </div>
+                </h3>
+            </td>
+        </tr>
+
+        <tr>
+            <td width="20%" class="coursetemplates-coursepicture"></td>
+            <td width="80%" class="coursetemplates-coursedesc">
+                {{{summary}}}
+            </td>
+        </tr>
+    </table>
+</div>
