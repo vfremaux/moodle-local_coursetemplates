@@ -92,6 +92,10 @@ class TemplateDeployForm extends moodleform {
 
         $errors = parent::validation($data, $files);
 
+        if (empty($data['category'])) {
+            $errors['category'] = get_string('errormissingcategory', 'local_coursetemplates');
+        }
+
         if ($DB->get_record('course', array('shortname' => $data['shortname']))) {
             $errors['shortname'] = get_string('errorshortnameused', 'local_coursetemplates');
         }
