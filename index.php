@@ -118,51 +118,7 @@ if ($data = $mform->get_data()) {
         die;
     }
 
-    $contextid = context_system::instance()->id;
-    $component = 'local_coursetemplates';
-    $filearea = 'temp';
-    $itemid = $uniq = 9999999 + rand(0, 100000);
-    $tempdir = $CFG->tempdir."/backup/$uniq";
-
-    if (!is_dir($tempdir)) {
-        mkdir($tempdir, 0777, true);
-    }
-
-    if (!$archivefile->extract_to_pathname(new tgz_packer(), $tempdir)) {
-        echo $OUTPUT->header();
-        echo $OUTPUT->box_start('error');
-        echo $OUTPUT->notification(get_string('restoreerror', 'local_coursetemplates'));
-        echo $OUTPUT->box_end();
-        echo $OUTPUT->continue_button($url);
-        echo $OUTPUT->footer();
-        die;
-    }
-
-    // Transaction.
-    $transaction = $DB->start_delegated_transaction();
-
-    // Create new course.
-    $categoryid = $data->category; // A categoryid.
-    $userdoingtherestore = $USER->id; // E.g. 2 == admin.
-    $newcourseid = restore_dbops::create_new_course('', '', $categoryid);
-
-    // Restore backup into course.
-    $controller = new restore_controller($uniq, $newcourseid,
-        backup::INTERACTIVE_NO, backup::MODE_SAMESITE, $userdoingtherestore,
-        backup::TARGET_NEW_COURSE );
-    $controller->execute_precheck();
-    $controller->execute_plan();
-
-    // Commit.
-    $transaction->allow_commit();
-
-    // Update names.
-    if ($newcourse = $DB->get_record('course', array('id' => $newcourseid))) {
-        $newcourse->fullname = $data->fullname;
-        $newcourse->shortname = $data->shortname;
-        $newcourse->idnumber = $data->idnumber;
-        $DB->update_record('course', $newcourse);
-    }
+    $newcourseid = coursetemplates_restore_template($archivefile, $data);
 
     if (!empty($data->enrolme)) {
         $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
@@ -173,10 +129,6 @@ if ($data = $mform->get_data()) {
             $enrolplugin->enrol_user($enrol, $USER->id, $role->id, time(), 0, ENROL_USER_ACTIVE);
         }
     }
-
-    // Cleanup temp file area.
-    $fs = get_file_storage();
-    $fs->delete_area_files($contextid, 'local_coursetemplates', 'temp');
 
     echo $OUTPUT->header();
     echo $OUTPUT->notification(get_string('success', 'local_coursetemplates'), 'notifysuccess');
