@@ -23,6 +23,14 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
+ * this function is not implemented in thos plugin, but is needed to mark
+ * the vf documentation custom volume availability.
+ */
+function local_coursetemplates_supports_feature() {
+    assert(1);
+}
+
+/**
  * prints a flat template list from available templates
  * TODO extend to template subcategories
  */
@@ -50,67 +58,64 @@ function coursetemplates_course_list() {
 /**
  * Make a silent restore of the template into the target category and enrol user as teacher inside
  * if reqested.
- * NOT USED AT THE MOMENT
  */
-function coursetemplates_restore_template($category, $sourcecourse, $enrolme) {
-    global $CFG, $USER, $DB;
+function coursetemplates_restore_template($archivefile, $data) {
+    global $CFG, $DB, $USER;
 
-    include_once($CFG->dirroot.'/backup/restorelib.php');
-    include_once($CFG->dirroot.'/backup/lib.php');
+    $contextid = context_system::instance()->id;
+    $component = 'local_coursetemplates';
+    $filearea = 'temp';
+    $itemid = $uniq = 9999999 + rand(0, 100000);
+    $tempdir = $CFG->tempdir."/backup/$uniq";
 
-    $deploycat = $DB->get_record('course_categories', array('id' => $category));
-
-    /*
-     * If publishflow is installed, prefer published backups,
-     * else where take standard available backup
-     */
-    $fs = get_file_storage();
-    $coursecontextid = context_course::instance($sourcecourse->id)->id;
-    if ($DB->get_record('blocks', array('name' => 'publishflow'))) {
-        // Lets get the publishflow published file.
-        $backupfiles = $fs->get_area_files($coursecontextid, 'backup', 'publishflow', 0, 'timecreated', false);
+    if (!is_dir($tempdir)) {
+        mkdir($tempdir, 0777, true);
     }
 
-    if (!$backupfiles) {
-        assert(true);
-        // TODO : Get last standard backup.
+    if (!$archivefile->extract_to_pathname(new tgz_packer(), $tempdir)) {
+        echo $OUTPUT->header();
+        echo $OUTPUT->box_start('error');
+        echo $OUTPUT->notification(get_string('restoreerror', 'local_coursetemplates'));
+        echo $OUTPUT->box_end();
+        echo $OUTPUT->continue_button($url);
+        echo $OUTPUT->footer();
+        die;
     }
 
-    if (!$backupfiles) {
-        print_error('errornotpublished', 'block_publishflow');
-    }
+    // Transaction.
+    $transaction = $DB->start_delegated_transaction();
 
-    $origtime = ini_get('max_execution_time');
-    $origmem = ini_get('memory_limit');
+    // Create new course.
+    $categoryid = $data->category; // A categoryid.
+    $userdoingtherestore = $USER->id; // E.g. 2 == admin.
+    $newcourseid = restore_dbops::create_new_course('', '', $categoryid);
 
-    $maxtime = '240';
-    $maxmem = '512M';
+    // Restore backup into course.
+    $controller = new restore_controller($uniq, $newcourseid,
+        backup::INTERACTIVE_NO, backup::MODE_SAMESITE, $userdoingtherestore,
+        backup::TARGET_NEW_COURSE );
+    $controller->execute_precheck();
+    $controller->execute_plan();
 
-    ini_set('max_execution_time', $maxtime);
-    ini_set('memory_limit', $maxmem);
+    // Commit.
+    $transaction->allow_commit();
 
-    // Confirm/force guest closure.
-
-    $file = array_pop($backupfiles);
-    $newcourseid = restore_automation::run_automated_restore($file->get_id(), null, $category);
-
-    // Confirm/force idnumber and new course params in new course.
-    $DB->set_field('course', 'fullname', $sourcecourse->fullname, array('id' => "{$newcourseid}"));
-    $DB->set_field('course', 'shortname', $sourcecourse->shortname, array('id' => "{$newcourseid}"));
-    $DB->set_field('course', 'idnumber', $sourcecourse->idnumber, array('id' => "{$newcourseid}"));
-
-    if ($enrolme) {
-        $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
-        $enrol = enrol_get_plugin('manual');
-        $params = array('enrol' => $c->enrol, 'courseid' => $newcourseid, 'status' => ENROL_INSTANCE_ENABLED);
-        if ($enrols = $DB->get_records('enrol', $params, 'sortorder ASC')) {
-            $enrol = reset($enrols);
-            $enrolplugin = enrol_get_plugin($c->enrol);
-            $enrolplugin->enrol_user($enrol, $USER->id, $role->id, time(), 0, ENROL_USER_ACTIVE);
+    // Update names.
+    if ($newcourse = $DB->get_record('course', array('id' => $newcourseid))) {
+        $newcourse->fullname = $data->fullname;
+        $newcourse->shortname = $data->shortname;
+        $newcourse->idnumber = $data->idnumber;
+        if (!empty($data->summary)) {
+            $newcourse->summary = $data->summary;
         }
+        $DB->update_record('course', $newcourse);
     }
 
-    return ($newcourseid);
+    // Cleanup temp file area.
+    $fs = get_file_storage();
+    $fs->delete_area_files($contextid, 'local_coursetemplates', 'temp');
+
+    return $newcourseid;
 }
 
 /**
