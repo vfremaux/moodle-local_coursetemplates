@@ -23,6 +23,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+if (!function_exists('debug_trace')) {
+    function debug_trace($message, $label = '') {
+        assert(1);
+    }
+}
+
 /**
  * Event observer for format_page.
  */
