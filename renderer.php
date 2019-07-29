@@ -57,8 +57,7 @@ class local_coursetemplates_renderer extends plugin_renderer_base {
         global $CFG;
 
         // Post 2.5.
-        include_once($CFG->dirroot.'/lib/coursecatlib.php');
-        $mycatlist = coursecat::make_categories_list('moodle/course:create');
+        $mycatlist = \core_course_category::make_categories_list('moodle/course:create');
 
         $str = '';
         $str .= '<table width="100%">';

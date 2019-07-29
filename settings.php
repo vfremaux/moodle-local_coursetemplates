@@ -44,8 +44,7 @@ if ($hassiteconfig) {
     $yesnooptions[1] = get_string('yes');
 
     // Post 2.5.
-    include_once($CFG->dirroot.'/lib/coursecatlib.php');
-    $catlist = coursecat::make_categories_list();
+    $catlist = \core_course_category::make_categories_list();
 
     $key = 'local_coursetemplates/enabled';
     $label = get_string('configenabled', 'local_coursetemplates');
