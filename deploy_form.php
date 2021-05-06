@@ -32,8 +32,7 @@ class TemplateDeployForm extends moodleform {
 
         $mform = $this->_form;
 
-        include_once($CFG->dirroot.'/lib/coursecatlib.php');
-        $mycatlist = coursecat::make_categories_list('moodle/course:create');
+        $mycatlist = \core_course_category::make_categories_list('moodle/course:create');
         $mycatlist = array('' => get_string('choose').'...') + $mycatlist;
 
         if (!empty($this->_customdata['profileme'])) {

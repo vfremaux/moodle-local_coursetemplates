@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// Privacy.
+$string['privacy:metadata'] = 'The Local Course Templates plugin does not store any personal data about any user.';
+
 $string['configautoenrolcreator'] = 'Auto enrol the course creator';
 $string['configautoenrolcreatordesc'] = 'If enabled, the user wo is operating the course creation will be enrolled as editing teacher. This feature cannot be used when course is create by server scripts.';
 $string['configenabled'] = 'Enable';
