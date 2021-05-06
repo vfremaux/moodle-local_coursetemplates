@@ -26,10 +26,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version  = 2016031802;   // The (date) version of this plugin.
-$plugin->requires = 2019111200;   // Requires this Moodle version.
+$plugin->requires = 2020060900;   // Requires this Moodle version.
 $plugin->component = 'local_coursetemplates';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '3.8.0 (Build 2016031802)';   // Requires this Moodle version.
+$plugin->release = '3.9.0 (Build 2016031802)';   // Requires this Moodle version.
 
 // Non moodle attributes.
-$plugin->codeincrement = '3.8.0001';
+$plugin->codeincrement = '3.9.0001';
