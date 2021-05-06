@@ -57,7 +57,7 @@ function coursetemplates_course_list() {
 
 /**
  * Make a silent restore of the template into the target category and enrol user as teacher inside
- * if reqested.
+ * if requested.
  */
 function coursetemplates_restore_template($archivefile, $data) {
     global $CFG, $DB, $USER;
@@ -93,7 +93,7 @@ function coursetemplates_restore_template($archivefile, $data) {
     // Restore backup into course.
     $controller = new restore_controller($uniq, $newcourseid,
         backup::INTERACTIVE_NO, backup::MODE_SAMESITE, $userdoingtherestore,
-        backup::TARGET_NEW_COURSE );
+        backup::TARGET_NEW_COURSE);
     $controller->execute_precheck();
     $controller->execute_plan();
 
@@ -180,6 +180,7 @@ function local_coursetemplates_backup_for_template($courseid, $options = array()
             'users' => 0,
             'role_assignments' => 0,
             'user_files' => 0,
+            'users' => 0,
             'activities' => 1,
             'blocks' => 1,
             'filters' => 1,

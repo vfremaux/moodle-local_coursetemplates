@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// Privacy.
+$string['privacy:metadata'] = 'Le composant local Modèles de Cours ne détient directement aucune donnée relative aux utilisateurs.';
+
 $string['configautoenrolcreator'] = 'Auto inscrire le créateur';
 $string['configautoenrolcreatordesc'] = 'Si ce réglage est activé, le créateur du cours sera automatiquement inscrit en tant qu\'enseignant editeur du cours. Cette fonctionnalité est désactivée pour les cours créés par des scripts serveur.';
 $string['configenabled'] = 'Activer';

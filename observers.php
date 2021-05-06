@@ -39,14 +39,23 @@ class local_coursetemplates_observer {
      * @param object $event
      */
     public static function on_course_created(\core\event\course_created $event) {
-        global $DB, $USER;
+        global $DB, $USER, $SESSION;
 
         $config = get_config('local_coursetemplates');
 
-        debug_trace("coursetemplates observer : try to enrol creator");
+        if (function_exists('debug_trace')) {
+            debug_trace("coursetemplates observer : try to enrol creator");
+        }
+
+        if (!empty($SESSION->nocoursetemplateautoenrol)) {
+            // Exclude sessions having this mark on.
+            return false;
+        }
 
         if (empty($config->autoenrolcreator)) {
-            debug_trace("coursetemplates observer : abort not enabled");
+            if (function_exists('debug_trace')) {
+                debug_trace("coursetemplates observer : abort not enabled");
+            }
             return false;
         }
 
@@ -54,27 +63,37 @@ class local_coursetemplates_observer {
         // Administrators usually create courses for other people.
         $systemcontext = context_system::instance();
         if (has_capability('moodle/site:config', $systemcontext, $event->userid) && defined('CLI_SCRIPT')) {
-            debug_trace("coursetemplates observer : abort as admin capabilities");
+            if (function_exists('debug_trace')) {
+                debug_trace("coursetemplates observer : abort as admin capabilities");
+            }
             return;
         }
 
         // User has course import capability. He may NOT be enrolled in all imported courses !
         if (has_capability('tool/sync:configure', $systemcontext, $event->userid) && defined('CLI_SCRIPT')) {
-            debug_trace("coursetemplates observer : abort as bulk course create capabilitites ");
+            if (function_exists('debug_trace')) {
+                debug_trace("coursetemplates observer : abort as bulk course create capabilitites ");
+            }
             return;
         }
 
         if (defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
-            debug_trace("coursetemplates observer : abort as testing ");
+            if (function_exists('debug_trace')) {
+                debug_trace("coursetemplates observer : abort as testing ");
+            }
             return;
         }
 
         if (defined('CLI_SCRIPT') && CLI_SCRIPT) {
-            debug_trace("coursetemplates observer : abort as running cli ");
+            if (function_exists('debug_trace')) {
+                debug_trace("coursetemplates observer : abort as running cli ");
+            }
             return;
         }
 
-        debug_trace("coursetemplates observer : enrolling $event->userid in course $event->objectid");
+        if (function_exists('debug_trace')) {
+            debug_trace("coursetemplates observer : enrolling $event->userid in course $event->objectid");
+        }
         $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
         $enrolplugin = enrol_get_plugin('manual');
         $params = array('enrol' => 'manual', 'courseid' => $event->objectid, 'status' => ENROL_INSTANCE_ENABLED);
@@ -87,7 +106,9 @@ class local_coursetemplates_observer {
             $enrolid = $enrolplugin->add_instance($course);
             $enrol = $DB->get_record('enrol', array('id' => $enrolid));
             $enrolplugin->enrol_user($enrol, $event->userid, $role->id, time(), 0, ENROL_USER_ACTIVE);
-            debug_trace("coursetemplates observer : no enrol instances in course $event->objectid");
+            if (function_exists('debug_trace')) {
+                debug_trace("coursetemplates observer : no enrol instances in course $event->objectid");
+            }
         }
     }
 }
