@@ -37,7 +37,7 @@ if (is_dir($CFG->dirroot.'/local/adminsettings')) {
 
 if ($hassiteconfig) {
     // Needs this condition or there is error on login page.
-    $settings = new admin_settingpage('local_coursetemplates', get_string('pluginname', 'local_coursetemplates'));
+    $settings = new admin_settingpage('localsettingcoursetemplates', get_string('pluginname', 'local_coursetemplates'));
     $ADMIN->add('localplugins', $settings);
 
     $yesnooptions[0] = get_string('no');
