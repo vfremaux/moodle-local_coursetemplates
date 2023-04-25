@@ -37,15 +37,14 @@ if (is_dir($CFG->dirroot.'/local/adminsettings')) {
 
 if ($hassiteconfig) {
     // Needs this condition or there is error on login page.
-    $settings = new admin_settingpage('local_coursetemplates', get_string('pluginname', 'local_coursetemplates'));
+    $settings = new admin_settingpage('localsettingcoursetemplates', get_string('pluginname', 'local_coursetemplates'));
     $ADMIN->add('localplugins', $settings);
 
     $yesnooptions[0] = get_string('no');
     $yesnooptions[1] = get_string('yes');
 
     // Post 2.5.
-    include_once($CFG->dirroot.'/lib/coursecatlib.php');
-    $catlist = coursecat::make_categories_list();
+    $catlist = \core_course_category::make_categories_list();
 
     $key = 'local_coursetemplates/enabled';
     $label = get_string('configenabled', 'local_coursetemplates');
