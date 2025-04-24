@@ -18,18 +18,19 @@
  * Version details.
  *
  * @package    local_coursetemplates
- * @category   local
  * @author     Valery Fremaux <valery.fremaux@gmail.com>
  * @copyright  2015 onwards Valery Fremaux (http://www.mylearnignfactory.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2016031802;   // The (date) version of this plugin.
-$plugin->requires = 2020060900;   // Requires this Moodle version.
+$plugin->version  = 2025011400;   // The (date) version of this plugin.
+$plugin->requires = 2022041900;   // Requires this Moodle version.
 $plugin->component = 'local_coursetemplates';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '3.9.0 (Build 2016031802)';   // Requires this Moodle version.
+$plugin->release = '4.5.0 (Build 2025011400)';   // Requires this Moodle version.
+$plugin->supported = [401, 405];
 
 // Non moodle attributes.
-$plugin->codeincrement = '3.9.0001';
+$plugin->codeincrement = '4.5.0003';

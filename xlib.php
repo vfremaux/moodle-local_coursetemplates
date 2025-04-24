@@ -15,16 +15,20 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    local_coursetemplates
- * @category   local
- * @author     Valery Fremaux <valery.fremaux@gmail.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Library to expose to other plugins.
+ *
+ * @package     local_coursetemplates
+ * @author      Valery Fremaux (valery.fremaux@gmail.com)
+ * @copyright   2017 Valery Fremaux (activeprolearn.com)
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/local/coursetemplates/lib.php');
 
 /**
+ * Get template categories for other plugins.
  * @return a simple array of ids.
  */
 function local_coursetemplates_get_template_categories() {
@@ -32,10 +36,10 @@ function local_coursetemplates_get_template_categories() {
     $config = get_config('local_coursetemplates');
 
     if (empty($config->templatecategory)) {
-        return array();
+        return [];
     }
 
-    $categories = array();
+    $categories = [];
     local_coursetemplates_get_all_categories($categories, $config->templatecategory);
 
     return $categories;

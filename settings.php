@@ -18,8 +18,8 @@
  * Global settings.
  *
  * @package    local_coursetemplates
- * @category   local
  * @author     Valery Fremaux <valery.fremaux@gmail.com>
+ * @copyright  Valery Fremaux (www.activeprolearn.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();

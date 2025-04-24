@@ -14,6 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Special bulk cli for VMoodle.
+ *
+ * @package     local_coursetemplates
+ * @author      Valery Fremaux (valery.fremaux@gmail.com)
+ * @copyright   2017 Valery Fremaux (activeprolearn.com)
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 define('CLI_SCRIPT', true);
 
 require(dirname(dirname(dirname(dirname(__FILE__)))).'/config.php'); // Global moodle config file.
@@ -25,18 +34,18 @@ unset($options);
 // Now get cli options.
 
 list($options, $unrecognized) = cli_get_params(
-    array(
+    [
         'help'             => false,
         'logroot'          => true,
         'verbose'          => true,
         'fullstop'         => false,
-    ),
-    array(
+    ],
+    [
         'h' => 'help',
         'l' => 'logroot',
         'v' => 'verbose',
         'x' => 'fullstop',
-    )
+    ]
 );
 
 if ($unrecognized) {
@@ -75,7 +84,7 @@ if (!empty($options['file'])) {
 }
 $file = '--file='.$options['file'];
 
-$allhosts = $DB->get_records('local_vmoodle', array('enabled' => 1));
+$allhosts = $DB->get_records('local_vmoodle', ['enabled' => 1]);
 
 // Start updating.
 // Linux only implementation.
@@ -88,7 +97,7 @@ foreach ($allhosts as $h) {
     $workercmd .= " {$verbose} {$logroot} ";
 
     mtrace("Executing $workercmd\n######################################################\n");
-    $output = array();
+    $output = [];
     exec($workercmd, $output, $return);
 
     if (!empty($output)) {

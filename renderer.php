@@ -15,106 +15,32 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Main renderer.
+ *
  * @package    local_coursetemplates
- * @category   local
  * @author     Valery Fremaux <valery.fremaux@gmail.com>
+ * @copyright  Valery Fremaux (www.activeprolearn.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Renderer class.
+ */
 class local_coursetemplates_renderer extends plugin_renderer_base {
 
-    public function templatecoursebox($course) {
-
-        $class = (!$course->visible) ? ' coursetemplate-shadow' : '';
-
-        $str = '';
-
-        $str .= '<div class="courselist coursebox '.$class.'">';
-        $str .= '<table class="course" width="100%">';
-        $button = '<input name="deploy"
-                          type="submit"
-                          value="'.get_string('deploy', 'local_coursetemplates').'"
-                          onclick="coursetemplate_submit();" />';
-        $submitbutton = '<div class="coursetemplate-submit">'.$button.'</div>';
-        $title = '<h3>'.format_string($course->fullname).$submitbutton.'</h3>';
-        $str .= '<tr><td colspan="2" class="coursetemplates-coursename">'.$title.'</td></tr>';
-        $str .= '<tr>';
-        $str .= '<td width="20%" class="coursetemplates-coursepicture"></td>';
-        $str .= '<td width="80%" class="coursetemplates-coursedesc">'.$course->summary.'</td>';
-        $str .= '</tr>';
-        $str .= '</table>';
-        $str .= '</div>';
-
-        return $str;
-    }
-
     /**
-     * provides form elements for deployment.
-     * will pick all the target categories the user can create courses in
+     * prints links to choose where to go after deployment is complete.
+     * @param int $newcourseid
+     * @param int $templatecourseid
      */
-    public function deployform() {
-        global $CFG;
-
-        // Post 2.5.
-        $mycatlist = \core_course_category::make_categories_list('moodle/course:create');
-
-        $str = '';
-        $str .= '<table width="100%">';
-
-        $str .= '<tr>';
-        $str .= '<td class="column1" width="40%">';
-        $str .= get_string('fullname');
-        $str .= '</td>';
-        $str .= '<td class="column2" width="60%">';
-        $str .= '<input type="text" name="fullname" size="80" />';
-        $str .= '</td>';
-        $str .= '</tr>';
-
-        $str .= '<tr>';
-        $str .= '<td class="column1" width="40%">';
-        $str .= get_string('shortname');
-        $str .= '</td>';
-        $str .= '<td class="column2">';
-        $str .= '<input type="text" name="shortname" size="16" />';
-        $str .= '</td>';
-        $str .= '</tr>';
-
-        $str .= '<tr>';
-        $str .= '<td class="column1" width="40%">';
-        $str .= get_string('idnumber');
-        $str .= '</td>';
-        $str .= '<td class="column2">';
-        $str .= '<input type="text" name="idnumber" size="16" />';
-        $str .= '</td>';
-        $str .= '</tr>';
-
-        $str .= '<tr>';
-        $str .= '<td class="column1" width="40%">';
-        $str .= get_string('targetcategory', 'local_coursetemplates');
-        $str .= '</td>';
-        $str .= '<td class="column1">';
-        $str .= html_writer::select($mycatlist, 'targetcategory');
-        $str .= '</td>';
-        $str .= '</tr>';
-
-        $str .= '</table>';
-
-        return $str;
-    }
-
     public function postdeploychoice($newcourseid, $templatecourseid) {
 
-        $str = '';
+        $template = new StdClass();
 
-        $newcourseurl = new moodle_url('/course/view.php', array('id' => $newvcouseid));
-        $templatecourseurl = new moodle_url('/course/view.php', array('id' => $templatevcouseid));
-        $templatelisturl = new moodle_url('/local/coursetemplates/index.php');
+        $template->newcourseurl = new moodle_url('/course/view.php', ['id' => $newcourseid]);
+        $template->templatecourseurl = new moodle_url('/course/view.php', ['id' => $templatecourseid]);
+        $template->templatelisturl = new moodle_url('/local/coursetemplates/index.php');
 
-        $str .= '<a href="'.$newcourseurl.'" >'.get_string('gotonew', 'local_coursetemplates').'</a>';
-        $str .= '- <a href="'.$templatecourseurl.'" >'.get_string('gototemplate', 'local_coursetemplates').'</a>';
-        $str .= '- <a href="'.$templatelisturl.'" >'.get_string('gototemplatelist', 'local_coursetemplates').'</a>';
-
-        return $str;
+        return $this->output->render_from_template('local_coursetemplates', $template);
     }
 }

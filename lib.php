@@ -15,12 +15,19 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * General library.
+ *
  * @package    local_coursetemplates
- * @category   local
  * @author     Valery Fremaux <valery.fremaux@gmail.com>
+ * @copyright  Valery Fremaux (www.activeprolearn.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
+
+/*
+ * phpcs:disable moodle.Commenting.ValidTags.Invalid
+ */
+
+define('LOCAL_CT_TRACE_DEBUG', 3);
 
 /**
  * this function is not implemented in thos plugin, but is needed to mark
@@ -31,55 +38,34 @@ function local_coursetemplates_supports_feature() {
 }
 
 /**
- * prints a flat template list from available templates
- * TODO extend to template subcategories
- */
-function coursetemplates_course_list() {
-    global $OUTPUT, $PAGE, $DB;
-
-    $renderer = $PAGE->get_renderer('local_coursetemplates');
-
-    $config = get_config('local_coursetemplates');
-
-    $courses = $DB->get_records('course', array('category' => $config->templatecategory));
-
-    if ($courses) {
-        foreach ($courses as $course) {
-            if (!$course->visible && !has_capability('moodle/course:viewhiddencourse')) {
-                continue;
-            }
-            echo $renderer->templatecoursebox($course);
-        }
-    } else {
-        $OUTPUT->box(get_string('notemplates', 'local_courdsetemplates'));
-    }
-}
-
-/**
  * Make a silent restore of the template into the target category and enrol user as teacher inside
  * if requested.
+ * @param string $archivefile
+ * @param object $data options from form.
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
  */
 function coursetemplates_restore_template($archivefile, $data) {
-    global $CFG, $DB, $USER;
+    global $CFG, $DB, $USER, $PAGE, $OUTPUT;
 
+    $uniqid = uniqid();
     $contextid = context_system::instance()->id;
-    $component = 'local_coursetemplates';
-    $filearea = 'temp';
-    $itemid = $uniq = 9999999 + rand(0, 100000);
-    $tempdir = $CFG->tempdir."/backup/$uniq";
+    $tempdir = $CFG->tempdir."/backup/$uniqid";
 
     if (!is_dir($tempdir)) {
         mkdir($tempdir, 0777, true);
     }
 
-    if (!$archivefile->extract_to_pathname(new tgz_packer(), $tempdir)) {
+    $url = new moodle_url('/local/coursetemplates/index.php');
+
+    if (!$archivefile->extract_to_pathname(new mbz_packer(), $tempdir)) {
         echo $OUTPUT->header();
         echo $OUTPUT->box_start('error');
         echo $OUTPUT->notification(get_string('restoreerror', 'local_coursetemplates'));
         echo $OUTPUT->box_end();
         echo $OUTPUT->continue_button($url);
         echo $OUTPUT->footer();
-        die;
+        return false;
     }
 
     // Transaction.
@@ -91,17 +77,53 @@ function coursetemplates_restore_template($archivefile, $data) {
     $newcourseid = restore_dbops::create_new_course('', '', $categoryid);
 
     // Restore backup into course.
-    $controller = new restore_controller($uniq, $newcourseid,
+    $controller = new restore_controller($uniqid, $newcourseid,
         backup::INTERACTIVE_NO, backup::MODE_SAMESITE, $userdoingtherestore,
         backup::TARGET_NEW_COURSE);
-    $controller->execute_precheck();
-    $controller->execute_plan();
+    if ($controller->execute_precheck()) {
+        $controller->execute_plan();
+    } else {
+        $precheckerrors = $controller->get_precheck_results();
+        $info = $controller->get_info();
+        echo $OUTPUT->header();
+        $renderer = $PAGE->get_renderer('core', 'backup');
+        echo $renderer->precheck_notices($precheckerrors);
+
+        if (!empty($info->role_mappings->mappings)) {
+            $context = context_course::instance($controller->get_courseid());
+            $assignableroles = get_assignable_roles($context, ROLENAME_ALIAS, false);
+
+            // Get current role mappings.
+            $currentroles = role_fix_names(get_all_roles(), $context);
+            // Get backup role mappings.
+            $rolemappings = $info->role_mappings->mappings;
+
+            array_map(function($rolemapping) use ($currentroles) {
+                foreach ($currentroles as $role) {
+                    // Find matching archetype to determine the backup's shortname for label display.
+                    if ($rolemapping->archetype == $role->archetype) {
+                        $rolemapping->name = $rolemapping->shortname;
+                        break;
+                    }
+                }
+                if ($rolemapping->name == null) {
+                    $rolemapping->name = get_string('undefinedrolemapping', 'backup', $rolemapping->archetype);
+                }
+            }, $rolemappings);
+
+            echo $renderer->role_mappings($rolemappings, $assignableroles);
+        }
+
+        echo $OUTPUT->continue_button($url);
+        echo $OUTPUT->footer();
+        return false;
+    }
 
     // Commit.
     $transaction->allow_commit();
 
     // Update names.
-    if ($newcourse = $DB->get_record('course', array('id' => $newcourseid))) {
+    if ($newcourse = $DB->get_record('course', ['id' => $newcourseid])) {
         $newcourse->fullname = $data->fullname;
         $newcourse->shortname = $data->shortname;
         $newcourse->idnumber = $data->idnumber;
@@ -131,7 +153,7 @@ function local_coursetemplates_locate_backup_file($courseid, $filearea) {
     $templatecontext = context_course::instance($courseid);
 
     // If ever the publishflow block is installed, get first the last published backup.
-    if ($DB->get_record('block', array('name' => 'publishflow'))) {
+    if ($DB->get_record('block', ['name' => 'publishflow'])) {
         // Lets get the publishflow published file.
         $backupfiles = $fs->get_area_files($templatecontext->id, 'backup', 'publishflow', 0, 'timecreated', false);
     }
@@ -151,9 +173,12 @@ function local_coursetemplates_locate_backup_file($courseid, $filearea) {
 /**
  * Make a course backup without user data and stores it in the course
  * backup area.
+ * @param int $courseid
+ * @param array $options
+ * @param object $log
  */
-function local_coursetemplates_backup_for_template($courseid, $options = array(), &$log = '') {
-    global $CFG, $USER;
+function local_coursetemplates_backup_for_template($courseid, $options = [], &$log = '') {
+    global $CFG;
 
     $user = get_admin();
 
@@ -176,11 +201,10 @@ function local_coursetemplates_backup_for_template($courseid, $options = array()
         $users = $bc->get_plan()->get_setting('users')->get_value();
         $anonymised = $bc->get_plan()->get_setting('anonymize')->get_value();
 
-        $settings = array(
+        $settings = [
             'users' => 0,
             'role_assignments' => 0,
             'user_files' => 0,
-            'users' => 0,
             'activities' => 1,
             'blocks' => 1,
             'filters' => 1,
@@ -188,8 +212,8 @@ function local_coursetemplates_backup_for_template($courseid, $options = array()
             'completion_information' => 0,
             'logs' => 0,
             'histories' => 0,
-            'filename' => backup_plan_dbops::get_default_backup_filename($format, $type, $id, $users, $anonymised)
-        );
+            'filename' => backup_plan_dbops::get_default_backup_filename($format, $type, $id, $users, $anonymised),
+        ];
 
         foreach ($settings as $setting => $configsetting) {
             if ($bc->get_plan()->setting_exists($setting)) {
@@ -236,6 +260,9 @@ function local_coursetemplates_backup_for_template($courseid, $options = array()
     }
 }
 
+/**
+ * Get template courses.
+ */
 function local_coursetemplates_get_courses() {
     global $DB;
 
@@ -245,7 +272,7 @@ function local_coursetemplates_get_courses() {
         return;
     }
 
-    $categories = array();
+    $categories = [];
     local_coursetemplates_get_all_categories($categories, $config->templatecategory);
 
     list($insql, $params) = $DB->get_in_or_equal($categories);
@@ -259,14 +286,15 @@ function local_coursetemplates_get_courses() {
 
 /**
  * Recusively fetch all template categories subtree.
- *
+ * @param array $catarray
+ * @param int $parentid
  */
-function local_coursetemplates_get_all_categories(&$catarray, $parent) {
+function local_coursetemplates_get_all_categories(& $catarray, $parentid) {
     global $DB;
 
-    $catarray[] = $parent;
+    $catarray[] = $parentid;
 
-    $children = $DB->get_records('course_categories', array('parent' => $parent), 'id,name');
+    $children = $DB->get_records('course_categories', ['parent' => $parentid], 'id,name');
     if (empty($children)) {
         return;
     }
@@ -276,14 +304,23 @@ function local_coursetemplates_get_all_categories(&$catarray, $parent) {
     }
 }
 
+/**
+ * Do enable templates.
+ */
 function local_coursetemplates_enable() {
     set_config('enabled', 1, 'local_coursetemplates');
 }
 
+/**
+ * Do disable templates.
+ */
 function local_coursetemplates_disable() {
     set_config('enabled', 0, 'local_coursetemplates');
 }
 
+/**
+ * Are tempaltes enabled ?
+ */
 function local_coursetemplates_enabled() {
     return get_config('local_coursetemplates', 'enabled');
 }
@@ -294,7 +331,7 @@ function local_coursetemplates_enabled() {
  * @param string $capability the capability to check for authoring
  * @param string $excludecats an array of catids we do not want courses in
  */
-function local_coursetemplates_get_my_authoring_courses($fields = '*', $capability = 'local/my:isauthor', $excludecats = array()) {
+function local_coursetemplates_get_my_authoring_courses($fields = '*', $capability = 'local/my:isauthor', $excludecats = []) {
     global $USER, $DB;
 
     if (empty($fields)) {
@@ -307,12 +344,25 @@ function local_coursetemplates_get_my_authoring_courses($fields = '*', $capabili
 
     if ($authored = local_get_user_capability_course($capability, $USER->id, false, '', 'sortorder')) {
         foreach ($authored as $a) {
-            $course = $DB->get_record('course', array('id' => $a->id), $fields);
+            $course = $DB->get_record('course', ['id' => $a->id], $fields);
             if (!in_array($course->category, $excludecats)) {
                 $authoredcourses[$a->id] = $course;
             }
         }
         return $authoredcourses;
     }
-    return array();
+    return [];
+}
+
+/**
+ * Wrapper to APL debugging.
+ * @param string $msg
+ * @param int $level
+ * @param string $label
+ * @param int $backtracelevel
+ */
+function local_coursetemplates_debug_trace($msg, $level = LOCAL_CT_TRACE_DEBUG, $label = '', $backtracelevel = 1) {
+    if (function_exists('debug_trace')) {
+        debug_trace($msg, $level, $label, $backtracelevel + 1);
+    }
 }

@@ -15,9 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Form to deploy a template.
+ *
  * @package    local_coursetemplates
- * @category   local
  * @author     Valery Fremaux <valery.fremaux@gmail.com>
+ * @copyright  Valery Fremaux (www.activeprolearn.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
@@ -25,16 +27,19 @@ defined('MOODLE_INTERNAL') || die();
 require($CFG->libdir.'/formslib.php');
 require_once('__other/elementgrid.php');
 
+/**
+ * Form to deploy templates.
+ */
 class TemplateDeployForm extends moodleform {
 
+    /**
+     * Standard definition.
+     */
     public function definition() {
-        global $DB, $CFG;
 
         $mform = $this->_form;
 
-        $mycatlist = \core_course_category::make_categories_list('moodle/course:create');
-        $mycatlist = array('' => get_string('choose').'...') + $mycatlist;
-
+        // Propagates a "profileme" local profiling commmand to restore execution.
         if (!empty($this->_customdata['profileme'])) {
             $mform->addElement('hidden', 'PROFILEME', 1);
             $mform->setType('PROFILEME', PARAM_BOOL);
@@ -51,51 +56,51 @@ class TemplateDeployForm extends moodleform {
         $mform->addElement('text', 'idnumber', get_string('idnumber'));
         $mform->setType('idnumber', PARAM_TEXT);
 
-        if (empty($this->_customdata['categoryid'])) {
-            $mform->addElement('select', 'category', get_string('category'), $mycatlist);
-            $mform->setType('category', PARAM_INT);
-            $label = get_string('errormissingcategory', 'local_coursetemplates');
-            $mform->addRule('category', $label, 'required', null, 'client');
-        } else {
-            $mform->addElement('hidden', 'category', $this->_customdata['categoryid']);
-            $mform->setType('category', PARAM_INT);
-        }
+        $mform->addElement('select', 'category', get_string('category'), $this->_customdata['mycatlist']);
+        $mform->setType('category', PARAM_INT);
+        $label = get_string('errormissingcategory', 'local_coursetemplates');
+        $mform->addRule('category', $label, 'required', null, 'client');
 
-        if (empty($this->_customdata['categoryid'])) {
-            $mform->addElement('checkbox', 'enrolme', get_string('enrolmein', 'local_coursetemplates'));
-            $mform->setDefault('enrolme', 1);
-        } else {
-            $mform->addElement('hidden', 'enrolme', true);
-            $mform->setType('enrolme', PARAM_BOOL);
-        }
+        $mform->addElement('checkbox', 'enrolme', get_string('enrolmein', 'local_coursetemplates'));
+        $mform->setDefault('enrolme', 1);
 
         $grid = &$mform->addElement('elementgrid', 'grid', get_string('templateselection', 'local_coursetemplates'));
-        $grid->setWidths(array('70%', '30%'));
+        $grid->setWidths(['70%', '30%']);
 
-        $config = get_config('local_coursetemplates');
-        $templatecourses = $DB->get_records('course', array('category' => $config->templatecategory));
-
-        foreach ($templatecourses as $course) {
+        foreach ($this->_customdata['templatecourses'] as $course) {
             if (!$course->visible) {
                 continue;
             }
-            $row = array();
+            $row = [];
             $row[] = $mform->createElement('html', '<h3>'.format_string($course->fullname).'</h3>');
             $row[] = $mform->createElement('submit', 'submit_'.$course->id, get_string('deploy', 'local_coursetemplates'));
             $grid->addRow($row);
         }
     }
 
-    public function validation($data, $files = array()) {
+    /**
+     * Standard validation
+     * @param object $data
+     * @param array $files
+     */
+    public function validation($data, $files = []) {
         global $DB;
 
         $errors = parent::validation($data, $files);
+
+        if (empty($data['fullname'])) {
+            $errors['fullname'] = get_string('erroremptyname', 'local_coursetemplates');
+        }
 
         if (empty($data['category'])) {
             $errors['category'] = get_string('errormissingcategory', 'local_coursetemplates');
         }
 
-        if ($DB->get_record('course', array('shortname' => $data['shortname']))) {
+        if ($DB->get_record('course', ['idnumber' => $data['idnumber']])) {
+            $errors['idnumber'] = get_string('erroridnumberused', 'local_coursetemplates');
+        }
+
+        if ($DB->get_record('course', ['shortname' => $data['shortname']])) {
             $errors['shortname'] = get_string('errorshortnameused', 'local_coursetemplates');
         }
 

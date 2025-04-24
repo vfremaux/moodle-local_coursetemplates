@@ -15,22 +15,30 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Global settings.
+ * Event observers definition.
  *
- * @package    local_coursetemplates
- * @category   local
- * @author     Valery Fremaux <valery.fremaux@gmail.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package     local_coursetemplates
+ * @author      Valery Fremaux (valery.fremaux@gmail.com)
+ * @copyright   2017 Valery Fremaux (activeprolearn.com)
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
 
-$observers = array (
-    array(
+$observers = [
+    [
         'eventname'   => '\core\event\course_created',
         'callback'    => 'local_coursetemplates_observer::on_course_created',
         'includefile' => '/local/coursetemplates/observers.php',
         'internal'    => true,
         'priority'    => 9999,
-    ),
+    ],
+    [
+        'eventname'   => '\core\event\course_restored',
+        'callback'    => 'local_coursetemplates_observer::on_course_restored',
+        'includefile' => '/local/coursetemplates/observers.php',
+        'internal'    => true,
+        'priority'    => 9999,
+    ],
 
-);
+];

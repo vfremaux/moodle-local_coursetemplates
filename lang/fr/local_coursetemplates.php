@@ -14,6 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Lang file.
+ *
+ * @package     local_coursetemplates
+ * @author      Valery Fremaux (valery.fremaux@gmail.com)
+ * @copyright   2017 Valery Fremaux (activeprolearn.com)
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 // Privacy.
 $string['privacy:metadata'] = 'Le composant local Modèles de Cours ne détient directement aucune donnée relative aux utilisateurs.';
 
@@ -35,6 +44,7 @@ $string['erroremptyshortname'] = 'Le nom court du nouveau cours ne peut pas êtr
 $string['errormissingcategory'] = 'Une catégorie doit être choisie';
 $string['errornobackup'] = 'Le gabarit choisi n\'a pas de sauvegarde utilisable. Contactez l\'administrateur ou le responsable des gabarits.';
 $string['errornocqategoryaccess'] = 'vous n\'avez pas d\'autorisation pour créer des cours dans cette catégorie';
+$string['erroridnumberused'] = 'Ce numéro d\'identification est déjà utilisé';
 $string['errorshortnameused'] = 'Ce nom court est déjà utilisé';
 $string['gotonew'] = 'Aller au nouveau cours';
 $string['gototemplate'] = 'Aller au modèle original';

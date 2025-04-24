@@ -14,6 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Lang file.
+ *
+ * @package     local_coursetemplates
+ * @author      Valery Fremaux (valery.fremaux@gmail.com)
+ * @copyright   2017 Valery Fremaux (activeprolearn.com)
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 // Privacy.
 $string['privacy:metadata'] = 'The Local Course Templates plugin does not store any personal data about any user.';
 
@@ -34,8 +43,9 @@ $string['erroremptyname'] = 'Name of new course cannot be empty';
 $string['erroremptyshortname'] = 'Shortname of new course cannot be empty';
 $string['errormissingcategory'] = 'Category is missing';
 $string['errornobackup'] = 'The template course has no backup deployable. contact administrator or templates manager.';
-$string['errornocqategoryaccess'] = 'You cannot create courses in this category';
+$string['errornocategoryaccess'] = 'You cannot create courses in this category';
 $string['errorshortnameused'] = 'This shortname is used';
+$string['erroridnumberused'] = 'This idnumber is used';
 $string['gotonew'] = 'Go to new course';
 $string['gototemplate'] = 'Go to original template course';
 $string['gototemplatelist'] = 'Come back to template list';

@@ -17,32 +17,39 @@
 /**
  * This script launches the course operations from command line CLI script calls.
  *
- * @package tool_sync
- * @author - Funck Thibaut
+ * @package     local_coursetemplates
+ * @author      Valery Fremaux (valery.fremaux@gmail.com)
+ * @copyright   2017 Valery Fremaux (activeprolearn.com)
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/*
+ * Not compatible with VMoodle meta handling.
+ * phpcs:disable moodle.Files.MoodleInternal.MoodleInternalGlobalState
  */
 
 define('CLI_SCRIPT', true);
-global $CLI_VMOODLE_PRECHECK;
+global $clivmoodleprecheck;
 
-$CLI_VMOODLE_PRECHECK = true; // Force first config to be minimal.
+$clivmoodleprecheck = true; // Force first config to be minimal.
 
 require(dirname(dirname(dirname(dirname(__FILE__)))).'/config.php');
 require_once($CFG->dirroot.'/lib/clilib.php'); // CLI only functions.
 
 // Now get cli options.
 list($options, $unrecognized) = cli_get_params(
-    array(
+    [
         'verbose'           => false,
         'help'              => false,
         'clean'             => false,
         'host'              => false,
-    ),
-    array(
+    ],
+    [
         'h' => 'help',
         'v' => 'verbose',
         'c' => 'clean',
-        'H' => 'host'
-    )
+        'H' => 'host',
+    ]
 );
 
 if ($unrecognized) {
@@ -71,7 +78,7 @@ Options:
 
 if (!empty($options['host'])) {
     // Arms the vmoodle switching.
-    echo('Arming for '.$options['host']."\n"); // mtrace not yet available.
+    echo('Arming for '.$options['host']."\n"); // Mtrace not yet available.
     define('CLI_VMOODLE_OVERRIDE', $options['host']);
 }
 
@@ -107,9 +114,9 @@ if ($courses) {
 }
 
 if (!empty($options['logroot'])) {
-    if ($LOG = fopen($logroot.'/'.$options['host'].'_backup_templates.log', 'w')) {
-        fputs($LOG, $log);
-        fclose($LOG);
+    if ($log = fopen($logroot.'/'.$options['host'].'_backup_templates.log', 'w')) {
+        fputs($log, $log);
+        fclose($log);
     }
 }
 if (!empty($options['verbose'])) {

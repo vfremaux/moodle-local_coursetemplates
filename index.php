@@ -15,26 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Template index page.
+ *
  * @package    local_coursetemplates
- * @category   local
  * @author     Valery Fremaux <valery.fremaux@gmail.com>
+ * @copyright  Valery Fremaux (www.activeprolearn.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 require('../../config.php');
 require_once($CFG->dirroot.'/local/coursetemplates/deploy_form.php');
 require_once($CFG->dirroot.'/local/coursetemplates/lib.php');
 require_once($CFG->dirroot.'/backup/util/includes/restore_includes.php');
-require_once("$CFG->libdir/filestorage/tgz_packer.php");
+require_once($CFG->libdir."/filestorage/mbz_packer.php");
 
 $url = new moodle_url('/local/coursetemplates/index.php');
-
-$sourcecourse = new StdClass();
-$sourcecourse->id = optional_param('restore', false, PARAM_INT);
-$sourcecourse->shortname = optional_param('shortname', false, PARAM_TEXT);
-$sourcecourse->fullname = optional_param('fullname', false, PARAM_CLEANHTML);
-$sourcecourse->idnumber = optional_param('idnumber', false, PARAM_TEXT);
-$targetcategory = optional_param('category', false, PARAM_INT);
-$forceediting = optional_param('forceediting', false, PARAM_INT);
 
 $PAGE->set_url($url);
 
@@ -50,38 +45,19 @@ $PAGE->set_title(get_string('pluginname', 'local_coursetemplates'));
 $PAGE->set_heading(get_string('pluginname', 'local_coursetemplates'));
 $PAGE->navbar->add(get_string('pluginname', 'local_coursetemplates'));
 
-// Control input and run deployment.
-if ($sourcecourse->id) {
-    if (empty($sourcecourse->fullname)) {
-        echo $OUTPUT->notification(get_string('erroremptyname', 'local_coursetemplates'), 'error');
-    } else if (empty($sourcecourse->shortname)) {
-        echo $OUTPUT->notification(get_string('erroremptyshortname', 'local_coursetemplates'), 'error');
-    } else if (empty($targetcategory)) {
-        print_error('errorbadcategory', 'local_coursetemplates');
-    } else if (!$targetcontext = context_coursecat::instance($targetcategory)) {
-        print_error('errorbadcategorycontext', 'local_coursetemplates');
-    } else if (!has_capability('moodle/course:create', $targetcontext)) {
-        echo $OUTPUT->notification(get_string('errornocategoryaccess', 'local_coursetemplates'), 'error');
-    } else {
-        $enrolme = optional_param('enrolme', false, PARAM_INT);
-        coursetemplate_restore_template($targetcategory, $sourcecourse, $enrolme);
-
-        $OUTPUT->header();
-        echo $renderer->postdeploychoice();
-        $OUTPUT->footer();
-    }
-}
-
-$options = array();
-if ($targetcategory) {
-    $options = array('categoryid' => $targetcategory, 'forceediting' => $forceediting);
-}
+$options = [];
 
 if (optional_param('profileme', 0, PARAM_BOOL)) {
-    $options['profileme'] = 1;
+    $customdata['profileme'] = 1;
 }
 
-$mform = new TemplateDeployForm($url, $options);
+$config = get_config('local_coursetemplates');
+$customdata['templatecourses'] = $DB->get_records('course', ['category' => $config->templatecategory]);
+$mycatlist = core_course_category::make_categories_list('moodle/course:create');
+$mycatlist = ['' => get_string('choose').'...'] + $mycatlist;
+$customdata['mycatlist'] = $mycatlist;
+
+$mform = new TemplateDeployForm($url, $customdata);
 
 // Process intermediary forms.
 if ($data = $mform->get_data()) {
@@ -99,8 +75,14 @@ if ($data = $mform->get_data()) {
         }
     }
 
+    // Check we have permissions to do it.
+    $categorycontext = context_coursecat::instance($data->category);
+    if (!has_capability('moodle/course:create', $categorycontext)) {
+        throw new moodle_exception('errornocategoryaccess', 'local_coursetemplates', '', $url);
+    }
+
     if (empty($templatecourseid)) {
-        print_error('errorbadtemplateid', 'local_coursetemplates', '', $url);
+        throw new moodle_exception('errorbadtemplateid', 'local_coursetemplates', '', $url);
     }
 
     if (!$archivefile = local_coursetemplates_locate_backup_file($templatecourseid, 'course')) {
@@ -119,11 +101,14 @@ if ($data = $mform->get_data()) {
     }
 
     $newcourseid = coursetemplates_restore_template($archivefile, $data);
+    if ($newcourseid === false) {
+        die;
+    }
 
     if (!empty($data->enrolme)) {
-        $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
+        $role = $DB->get_record('role', ['shortname' => 'editingteacher']);
         $enrolplugin = enrol_get_plugin('manual');
-        $params = array('enrol' => 'manual', 'courseid' => $newcourseid, 'status' => ENROL_INSTANCE_ENABLED);
+        $params = ['enrol' => 'manual', 'courseid' => $newcourseid, 'status' => ENROL_INSTANCE_ENABLED];
         if ($enrols = $DB->get_records('enrol', $params, 'sortorder ASC')) {
             $enrol = reset($enrols);
             $enrolplugin->enrol_user($enrol, $USER->id, $role->id, time(), 0, ENROL_USER_ACTIVE);
@@ -133,7 +118,7 @@ if ($data = $mform->get_data()) {
     echo $OUTPUT->header();
     echo $OUTPUT->notification(get_string('success', 'local_coursetemplates'), 'notifysuccess');
     $label = get_string('gotonew', 'local_coursetemplates');
-    echo $OUTPUT->single_button(new moodle_url('/course/view.php', array('id' => $newcourseid)), $label);
+    echo $OUTPUT->single_button(new moodle_url('/course/view.php', ['id' => $newcourseid]), $label);
     echo '<hr>';
     $mform->display();
     echo $OUTPUT->footer();
