@@ -96,8 +96,10 @@ class TemplateDeployForm extends moodleform {
             $errors['category'] = get_string('errormissingcategory', 'local_coursetemplates');
         }
 
-        if ($DB->get_record('course', ['idnumber' => $data['idnumber']])) {
-            $errors['idnumber'] = get_string('erroridnumberused', 'local_coursetemplates');
+        if (!empty($data['idnumber'])) {
+            if ($DB->get_record('course', ['idnumber' => $data['idnumber']])) {
+                $errors['idnumber'] = get_string('erroridnumberused', 'local_coursetemplates');
+            }
         }
 
         if ($DB->get_record('course', ['shortname' => $data['shortname']])) {
